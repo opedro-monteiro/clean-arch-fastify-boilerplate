@@ -1,71 +1,145 @@
 import fs from 'fs'
 import path from 'path'
 
-const baseDir = path.resolve('src/modules')
+const basePath = path.resolve('src', 'modules')
 
-const folders = [
-  'controllers',
-  'entities',
-  'repositories',
-  'routes',
-  'schemas',
-  'services',
-]
-
-const templates: Record<string, (name: string) => string> = {
-  controllers: (name) => `export class ${name}Controller {
-  async example() {
-    return { message: '${name} works!' }
-  }
-}`,
-  entities: (name) => `export interface ${name}Entity {
+const templates = {
+  entity: (name: string) => `export interface ${name}Entity {
   id: string
-  // define properties
-}`,
-  repositories: (name) => `export class ${name}Repository {
-  // your database logic here
-}`,
-  routes: (name) => `import { FastifyInstance } from 'fastify'
-import { ${name}Controller } from '../controllers/${name}.controller'
-
-export async function ${name}Routes(app: FastifyInstance) {
-  const controller = new ${name}Controller()
-  app.get('/${name.toLowerCase()}', controller.example)
-}`,
-  schemas: (name) => `import { z } from 'zod'
-
-export const ${name}Schema = z.object({
-  // define schema
-})`,
-  services: (name) => `export class ${name}Service {
-  // business logic
-}`,
+  name: string
+  email: string
 }
+`,
 
-export function generateModule(moduleName: string) {
-  const moduleDir = path.join(baseDir, moduleName)
+  schema: (name: string) => `import { z } from 'zod'
 
-  if (fs.existsSync(moduleDir)) {
-    console.error(`❌ Módulo "${moduleName}" já existe.`)
-    return
+export const create${name}Schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+})
+
+export type Create${name}Dto = z.infer<typeof create${name}Schema>
+`,
+
+  repository: (name: string) => `import { ${name}Entity } from '../entities/${name.toLowerCase()}.entity'
+
+export class ${name}Repository {
+  private ${name.toLowerCase()}s: ${name}Entity[] = []
+
+  findAll(): ${name}Entity[] {
+    return this.${name.toLowerCase()}s
   }
 
-  fs.mkdirSync(moduleDir, { recursive: true })
+  create(${name.toLowerCase()}: ${name}Entity): ${name}Entity {
+    this.${name.toLowerCase()}s.push(${name.toLowerCase()})
+    return ${name.toLowerCase()}
+  }
+}
+`,
 
-  folders.forEach((folder) => {
-    const folderPath = path.join(moduleDir, folder)
-    fs.mkdirSync(folderPath, { recursive: true })
+  service: (name: string) => `import { ${name}Repository } from '../repositories/${name.toLowerCase()}.repository'
+import { Create${name}Dto } from '../schemas/${name.toLowerCase()}.schema'
+import { randomUUID } from 'crypto'
 
-    const fileName = `${moduleName}.${folder.slice(0, -1)}.ts`
-    const filePath = path.join(folderPath, fileName)
-    const content = templates[folder](capitalize(moduleName))
+export class ${name}Service {
+  private repo = new ${name}Repository()
 
-    fs.writeFileSync(filePath, content)
+  getAll() {
+    return this.repo.findAll()
+  }
+
+  create(data: Create${name}Dto) {
+    const ${name.toLowerCase()} = {
+      id: randomUUID(),
+      ...data,
+    }
+    return this.repo.create(${name.toLowerCase()})
+  }
+}
+`,
+
+  controller: (name: string) => `import { FastifyRequest, FastifyReply } from 'fastify'
+import { ${name}Service } from '../services/${name.toLowerCase()}.service'
+import { create${name}Schema } from '../schemas/${name.toLowerCase()}.schema'
+
+export class ${name}Controller {
+  private service = new ${name}Service()
+
+  getAll = async (req: FastifyRequest, reply: FastifyReply) => {
+    const data = this.service.getAll()
+    reply.send(data)
+  }
+
+  create = async (req: FastifyRequest, reply: FastifyReply) => {
+    const body = await create${name}Schema.parseAsync(req.body)
+    const result = this.service.create(body)
+    reply.code(201).send(result)
+  }
+}
+`,
+
+  routes: (name: string) => `import { FastifyInstance } from 'fastify'
+import { ${name}Controller } from '../controllers/${name.toLowerCase()}.controller'
+
+export async function ${name.toLowerCase()}Routes(app: FastifyInstance) {
+  const controller = new ${name}Controller()
+
+  app.get('/${name.toLowerCase()}', controller.getAll)
+  app.post('/${name.toLowerCase()}', controller.create)
+}
+`,
+}
+
+function createFile(filePath: string, content: string) {
+  fs.writeFileSync(filePath, content)
+  console.log(`✓ Created ${filePath}`)
+}
+
+function generateModule(nameRaw: string) {
+  const name = nameRaw.charAt(0).toUpperCase() + nameRaw.slice(1).toLowerCase()
+  const folder = path.join(basePath, nameRaw.toLowerCase())
+
+  const structure = [
+    'controllers',
+    'entities',
+    'repositories',
+    'routes',
+    'schemas',
+    'services',
+  ]
+
+  const dirToTemplateMap: Record<string, keyof typeof templates> = {
+    controllers: 'controller',
+    entities: 'entity',
+    repositories: 'repository',
+    routes: 'routes',
+    schemas: 'schema',
+    services: 'service',
+  }
+
+  structure.forEach((dir) => {
+    const dirPath = path.join(folder, dir)
+    fs.mkdirSync(dirPath, { recursive: true })
+
+    const fileName = `${nameRaw.toLowerCase()}.${dirToTemplateMap[dir]}.ts`
+    const filePath = path.join(dirPath, fileName)
+
+    const templateKey = dirToTemplateMap[dir]
+    const template = templates[templateKey]
+
+    if (template) {
+      const content = template(name)
+      createFile(filePath, content)
+    }
   })
-
-  console.log(`✅ Módulo "${moduleName}" criado com sucesso.`)
 }
 
-function capitalize(str: string) {
-  return str.charAt(0).toUpperCase() + str.slice(1)
+const args = process.argv.slice(2)
+
+if (args[0] === 'generate' && args[1]) {
+  generateModule(args[1])
+} else {
+  console.error('❌ Use: fastify-clean generate <moduleName>')
 }
+
+export { generateModule }

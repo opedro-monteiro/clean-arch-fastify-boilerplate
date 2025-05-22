@@ -13,6 +13,6 @@
     "outDir": "dist",                    // Onde vai o código compilado
     "forceConsistentCasingInFileNames": true // Evita bugs entre Windows/Linux
   },
-  "include": ["src"],
+  "include": ["src", "src/index.ts"],
   "exclude": ["node_modules", "dist"]
 }
