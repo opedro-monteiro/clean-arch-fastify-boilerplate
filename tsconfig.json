@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2022",                   // Moderno, mas compatível com Node atual
+    "module": "CommonJS",                 // CLI e bibliotecas NPM funcionam melhor
+    "lib": ["ES2022"],                    // Funções modernas como Array.prototype.at, etc
+    "strict": true,                       // Segurança total nos tipos
+    "esModuleInterop": true,             // Suporte a importações de módulos CommonJS
+    "resolveJsonModule": true,           // Permite importar arquivos .json
+    "moduleResolution": "node",          // Resolve módulos como Node
+    "skipLibCheck": true,                // Ignora verificação de tipos de dependências
+    "rootDir": "src",                    // Onde estão seus arquivos fonte
+    "outDir": "dist",                    // Onde vai o código compilado
+    "forceConsistentCasingInFileNames": true // Evita bugs entre Windows/Linux
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}
