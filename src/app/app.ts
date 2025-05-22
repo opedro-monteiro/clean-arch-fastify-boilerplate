@@ -7,12 +7,10 @@ import {
     serializerCompiler,
     validatorCompiler,
 } from 'fastify-type-provider-zod'
-import { env } from '../config/env'
 import { swaggerOptions } from '../shared/plugins/swagger'
 import { routes } from './routes/routes'
 
 export async function buildApp() {
-
     const app = fastify({
         logger: {
             transport: {

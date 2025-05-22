@@ -1,6 +1,6 @@
+import { FastifyInstance } from 'fastify'
+import { exampleRoutes } from '../../modules/example/routes/example.routes'
 
-import type { FastifyTypedInstance } from './types'
-
-export async function routes(app: FastifyTypedInstance) {
-    app.register(bookRoutes, { prefix: '/api/v1' })
+export async function routes(app: FastifyInstance) {
+    app.register(exampleRoutes, { prefix: '/api/v1' })
 }

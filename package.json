@@ -1,9 +1,9 @@
 {
   "name": "clean-arch-fastify-boilerplate",
   "version": "1.0.0",
-  "description": "boilerplate completo Clean Architecture com Fastify + TypeScript + Swagger",
-  "main": "index.js",
+  "description": "Boilerplate completo Clean Architecture com Fastify + TypeScript + Swagger",
   "type": "commonjs",
+  "main": "dist/index.js",
   "bin": {
     "fastify-clean": "dist/index.js"
   },
@@ -12,20 +12,30 @@
   ],
   "types": "dist/index.d.ts",
   "scripts": {
+    "build": "tsc",
+    "dev": "ts-node-dev src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "fastify",
+    "typescript",
+    "cli",
+    "boilerplate",
+    "clean-architecture"
+  ],
+  "author": "Pedro Monteiro",
   "license": "ISC",
   "dependencies": {
     "@fastify/cors": "^11.0.1",
     "@fastify/swagger": "^9.5.1",
     "@fastify/swagger-ui": "^5.2.2",
+    "commander": "^14.0.0",
     "fastify": "^5.3.3",
     "fastify-type-provider-zod": "^4.0.2",
     "zod": "^3.25.20"
   },
   "devDependencies": {
+    "@types/commander": "^2.12.0",
     "@types/node": "^22.15.21",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"
